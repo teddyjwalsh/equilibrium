@@ -61,6 +61,35 @@ class Map
         std::sort(contacts.begin(), contacts.end(), [](const ContactInfo& a, const ContactInfo& b) { return a.height_delta < b.height_delta; });
     }
     
+    void iterate_cell(int x, int y)
+    {
+        const float primary_erosion_subtraction = 3*0.0005;
+        const float contact_erosion_factor = 10*0.001;
+        if (_frozen_bucket_ma[x][y] > 0)
+        {
+            float max_transfer;
+            auto contacts = get_contacts(x, y);
+            float transfer_delta = contacts.back().height_delta;
+            if (transfer_delta > 0)
+            {
+                int transfer_bucket_count = int(std::min(std::max(int(transfer_delta/_blob_height/2.0f), 1), _frozen_bucket_map[x][y]));
+                float lifted_soil = transfer_delta*primary_erosion_subtraction;
+                float lifted_transfer = _lifted_matter_map[contacts.back().x][contacts.back().y]*transfer_bucket_count*1.0/_bucket_map[x][y];
+                _lifted_matter_map[contacts.back().x][contacts.back().y] -= lifted_transfer;
+                lifted_soild += lifted_transfer;
+                
+                _bucket_map[x][y] -= transfer_bucket_count;
+                _bucket_map[contacts.back().x][contacts.back().y] += transfer_bucket_count;
+                _height_map[x][y] -= transfer_delta*primary_erosion_subtraction;
+                for (auto& contact : contacts)
+                {
+                    _height_map[contact.x][contact.y] -= transfer_delta*contact.contact_delta*contact_erosion_factor;
+                    lifted_soil += transfer_delta*contact.contact_delta*contact_erosion_factor;
+                }
+                _lifted_matter_map[contacts.back().x][contacts.back().y] += lifted_soil;
+            }
+        }
+    }
 };
 
 } // namespace equilibrium
