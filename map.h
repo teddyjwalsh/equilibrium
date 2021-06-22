@@ -1,6 +1,12 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
+#include <random>
+#include <vector>
+#include <algorithm>
+
+#include "noise.h"
+
 namespace equilibrium
 {
 
@@ -21,6 +27,8 @@ class Map
     float _evaporation_probability = 0.05;
     int _size_x;
     int _size_y;
+
+    CombinedNoise _terrain_gen;
     
     struct ContactInfo
     {
@@ -39,14 +47,14 @@ class Map
         if (x != _size_x - 1)
         {
             contacts.push_back({x+1, y, 0,0,1});
-            if (y != 0) { contacts.push_Back({x-1, y-1, 0, 0, 1.414}); }
-            if (y != _size_y - 1) { contacts.push_Back({x-1, y+1, 0, 0, 1.414}); }
+            if (y != 0) { contacts.push_back({x-1, y-1, 0, 0, 1.414}); }
+            if (y != _size_y - 1) { contacts.push_back({x-1, y+1, 0, 0, 1.414}); }
         }
         if (x != 0)
         {
             contacts.push_back({x-1, y, 0,0,1});
-            if (y != 0) { contacts.push_Back({x+1, y-1, 0, 0, 1.414}); }
-            if (y != _size_y - 1) { contacts.push_Back({x+1, y+1, 0, 0, 1.414}); }
+            if (y != 0) { contacts.push_back({x+1, y-1, 0, 0, 1.414}); }
+            if (y != _size_y - 1) { contacts.push_back({x+1, y+1, 0, 0, 1.414}); }
         }
         if (y != _size_y - 1) { contacts.push_back({x, y+1,0,0,2}); }
         if (y != 0) { contacts.push_back({x, y-1, 0,0,1}); }
@@ -59,13 +67,14 @@ class Map
             contact.contact_delta = std::max(0.0f, std::min(_height_map[contact.x][contact.y] + rand_height_delta, start_height) - _height_map[x][y]);
         }
         std::sort(contacts.begin(), contacts.end(), [](const ContactInfo& a, const ContactInfo& b) { return a.height_delta < b.height_delta; });
+        return contacts;
     }
     
     void iterate_cell(int x, int y)
     {
         const float primary_erosion_subtraction = 3*0.0005;
         const float contact_erosion_factor = 10*0.001;
-        if (_frozen_bucket_ma[x][y] > 0)
+        if (_frozen_bucket_map[x][y] > 0)
         {
             float max_transfer;
             auto contacts = get_contacts(x, y);
@@ -76,7 +85,7 @@ class Map
                 float lifted_soil = transfer_delta*primary_erosion_subtraction;
                 float lifted_transfer = _lifted_matter_map[contacts.back().x][contacts.back().y]*transfer_bucket_count*1.0/_bucket_map[x][y];
                 _lifted_matter_map[contacts.back().x][contacts.back().y] -= lifted_transfer;
-                lifted_soild += lifted_transfer;
+                lifted_soil += lifted_transfer;
                 
                 _bucket_map[x][y] -= transfer_bucket_count;
                 _bucket_map[contacts.back().x][contacts.back().y] += transfer_bucket_count;
@@ -87,6 +96,62 @@ class Map
                     lifted_soil += transfer_delta*contact.contact_delta*contact_erosion_factor;
                 }
                 _lifted_matter_map[contacts.back().x][contacts.back().y] += lifted_soil;
+            }
+        }
+    }
+
+    void freeze_buckets()
+    {
+        _frozen_bucket_map = _bucket_map;
+    }
+
+public:
+
+    Map(int size_x, int size_y):
+        _size_x(size_x),
+        _size_y(size_y),
+        _height_distribution(-0.000001, 0.000001),
+        _bucket_map(size_x, std::vector<int>(size_y)),
+        _height_map(size_x, std::vector<float>(size_y)),
+        _lifted_matter_map(size_x, std::vector<float>(size_y))
+    {
+        _terrain_gen.add_noise(50, 1);
+        _terrain_gen.add_noise(300, 1);
+        for (int i = 0; i < _size_x; ++i)
+        {
+            for (int j = 0; j < _size_y; ++j)
+            {
+                _height_map[i][j] = _terrain_gen.get_point(i, j);
+            }
+        }
+    }
+
+    void iterate()
+    {
+        freeze_buckets();
+        for (int i = 0; i < _size_x; ++i)
+        {
+            for (int j = 0; j < _size_y; ++j)
+            {
+                iterate_cell(i, j);
+            }
+        }
+        freeze_buckets();
+        for (int i = _size_x - 1; i >= 0; --i)
+        {
+            for (int j = _size_y - 1; j >= 0; --j)
+            {
+                iterate_cell(i, j);
+            }
+        }
+        float drop_fraction = 0.001;
+        for (int i = 0; i < _size_x; ++i)
+        {
+            for (int j = 0; j < _size_y; ++j)
+            {
+                float dropped_soil = drop_fraction*_lifted_matter_map[i][j];
+                _lifted_matter_map[i][j] -= dropped_soil;
+                _height_map[i][j] += dropped_soil;
             }
         }
     }
