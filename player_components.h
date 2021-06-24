@@ -19,6 +19,10 @@ Oxygen use system:
     pos_component = get_sibling<pos>(ouc)
     if ouc.use_with_movement and pos_component:
       ouc.oxygen_level -= get_oxygen_use_from_location_change(pos_component.last_location, pos_component.loction)
+      // What are consequences for oxygen depletion?
+      // - Pass out, respawn at last used oxygen station
+      // - Die? What would this mean?
+      // - Movement becomes very slow. Seems annoying.
         
  
 Inputs: ActionComponent, PositionComponent, InventoryComponent
@@ -43,7 +47,28 @@ Action system:
           moveable_comp = get_sibling<moveable>(action_comp)
           moveable_comp.request = current_action.location
       case TERRAIN_MOD
+      case USE_ENVIRONMENT_OBJECT
+      case USE_INVENTORY_OBJECT
       
+      
+Input system:
+  keystate_comp = get_keystate_component()
+  camera_component = get_camera_component()
+  action_component = get_sibling<action_component>(keystate_comp)
+  if keystate_comp.right_mouse_press:
+    object_placement_map = get_component<object_placement_map>()
+    object = object_placement_map.get_object_at_coordinate(camera.screen_to_world_coords(keystate_comp.mouse_loc))
+    if (object)
+      new_action.type = USE_ENVIRONMENT_OBJECT
+      new_action.object = object
+      action_component.queue_action(new_action)
+    else
+      new_action.type = MOVEMENT
+      new_action.location = camera.screen_to_world_coords(keystate_comp.mouse_loc)
+  elif keystate_comp.left_mouse_press:
+    if action_component.action_waiting_on_mouse:
+      // switch based on action here
+  
         
 
 
