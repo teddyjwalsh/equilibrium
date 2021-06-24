@@ -49,6 +49,8 @@ Action system:
       case TERRAIN_MOD
       case USE_ENVIRONMENT_OBJECT
       case USE_INVENTORY_OBJECT
+      case DIG
+        
       
       
 Input system:
@@ -69,10 +71,11 @@ Input system:
     if action_component.action_waiting_on_mouse:
       // switch based on action here
   
-        
-
-
-        
-
+Use system:
+  user_components = get_components<UserComp>()
+  for user  in user_components
+    if user.use_event:
+      // Questionable due to usee component having functionality
+      user.use_event.usee.use(user)
     
         
