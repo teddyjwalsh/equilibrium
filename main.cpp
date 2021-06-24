@@ -25,10 +25,13 @@ int main()
 {
     auto cm = std::make_shared<ComponentManager>();
     cm->add_array<CompCamera>();
+    cm->add_array<CompGraphics>();
     cm->add_array<CompRenderableMesh>();
     auto graphics_system = std::make_shared<GraphicsSystem>();
     cm->add_system(graphics_system);
     cm->add_component<CompCamera>();
+    cm->add_component<CompGraphics>();
+    cm->init_update();
     while(1)
     {
         cm->update();
