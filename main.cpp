@@ -32,6 +32,14 @@ int main()
     cm->add_system(graphics_system);
     cm->add_component<CompRayCamera>();
     cm->add_component<CompGraphics>();
+    auto is = std::make_shared<SysInput>();
+    EntityId player = cm->add_entity({
+               uint32_t(type_id<CompPosition>),
+               uint32_t(type_id<CompPickupper>),
+               uint32_t(type_id<CompRayCamera>),
+               uint32_t(type_id<CompPlayerTerrain>),
+               uint32_t(type_id<CompKeyState>)});
+    cm->add_system(is);
     cm->init_update();
     while(1)
     {

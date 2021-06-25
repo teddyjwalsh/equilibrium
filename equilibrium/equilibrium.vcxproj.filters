@@ -27,9 +27,6 @@
     <ClCompile Include="..\renderable_mesh_component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\graphics_component.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\ray_camera_component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -53,13 +50,13 @@
     <ClInclude Include="..\renderable_mesh_component.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\graphics_component.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\ray_camera_component.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\quadtree.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\noise_gen.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

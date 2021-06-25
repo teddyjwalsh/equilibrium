@@ -10,6 +10,7 @@
 #include "renderable_mesh_component.h"
 #include "ray_camera_component.h"
 #include "quadtree.h"
+#include "noise_gen.h"
 
 extern std::string light_compute_shader;
 
@@ -23,6 +24,7 @@ class GraphicsSystem :
     std::shared_ptr<bgfx::Material> _mat;
     bgfx::ComputeShader _cs;
     quadtree::QuadTree _quadtree;
+    CombinedNoise _noise;
 
     std::default_random_engine _generator;
     std::normal_distribution<double> _distribution;
@@ -32,9 +34,12 @@ public:
     GraphicsSystem():
         _context(1920,1080),
         _camera(1,0.8),
-        _distribution(5.0, 2.5)
+        _distribution(5.0, 2.5),
+        _quadtree(1024)
     {
         _type_name = "graphics";
+        _noise.add_noise(1, 15.0);
+        _noise.add_noise(5, 5.0);
     }
 
     virtual void init_update() override 
@@ -48,8 +53,8 @@ public:
         graphics_comp.window = _context.get_window();
         int x_res, y_res;
         graphics_comp.get_window_size(x_res, y_res);
-        x_res = 800;
-        y_res = 600;
+        x_res = 500;
+        y_res = 300;
         graphics_comp.window = _context.get_window();
 
         auto quad_mesh = std::make_shared<bgfx::Mesh>();
@@ -88,35 +93,40 @@ public:
         ray_camera.f = 0.5;
         ray_camera.width = 1.0;
         ray_camera.height = y_res * 1.0 / x_res;
-        ray_camera.location = glm::vec3(140, 140, 30);
-        ray_camera.set_look(glm::normalize(glm::vec3(64, 64, 0) - ray_camera.location));
+        ray_camera.location = glm::vec3(10, 10, 60);
+        ray_camera.set_look(glm::normalize(glm::vec3(50, 50, 0) - ray_camera.location));
         
         auto height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
-        std::vector<float> height_map_vector(x_res * y_res);
-        for (int i = 0; i < x_res * y_res; ++i)
-        {
-            height_map_vector[i] = i * 1.0 / (x_res * y_res);
-        }
-        height_map_buffer->set_data(height_map_vector);
+
 
         float block_size = 1;
-        int qt_x_size = 128;
-        int qt_y_size = 128;
+        int qt_x_size = 1024;
+        int qt_y_size = 1024;
+        std::vector<float> height_map_vector(qt_x_size * qt_y_size);
+        
+
         for (int i = 0; i < qt_x_size; i += 1)
         {
             for (int j = 0; j < qt_y_size; j += 1)
             {
-                double height = _distribution(_generator);
+                double height = _noise.get_point(i, j);
                 _quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
+                height_map_vector[j * qt_x_size + i] = height;
             }
         }
+        height_map_buffer->set_data(height_map_vector, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
         _quadtree.load_nodes();
 
         _cs.add_texture(quad_tex, 1);
         _cs.add_buffer_input(_quadtree.get_buffer(), 2);
+        _cs.add_buffer_input(height_map_buffer, 3);
         _cs.set_code(light_compute_shader);
         _cs.set_call_size(x_res, y_res, 1);
         _cs.compile();
+
+        _cs._program.use();
+        _cs._program.set_uniform_i1(_cs._program.get_uniform_location("height_map_height"), qt_y_size);
+        _cs._program.set_uniform_i1(_cs._program.get_uniform_location("height_map_width"), qt_x_size);
 
         _cs.run();
     }

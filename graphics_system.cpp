@@ -1,8 +1,5 @@
-#include "graphics_system.h"
-
-std::string light_compute_shader = R"V0G0N(
-
-#version 460
+#include "graphics_system.h" 
+std::string light_compute_shader = R"V0G0N( #version 460
 
 struct QuadTreeNode
 {
@@ -13,12 +10,18 @@ struct QuadTreeNode
     int is_object;
 };
 
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout(rgba32f, binding=1) uniform image2D tex_out;
 layout(binding = 2, std430) buffer Nodes
 {
 	QuadTreeNode nodes[ ];
 };
+
+layout(binding = 3, std430) buffer HeightMap
+{
+	float height_map[ ];
+};
+
 
 uniform vec3 camera_loc;
 uniform vec3 camera_look;
@@ -26,7 +29,11 @@ uniform float camera_width;
 uniform float camera_height;
 uniform vec3 camera_right;
 uniform vec3 camera_up;
+uniform int height_map_width;
+uniform int height_map_height;
 const float camera_f = 0.5;
+const int length = 50;
+
 
 ivec4 offset_to_sorted_children(vec3 offset)
 {
@@ -74,9 +81,33 @@ bool ray_intersect_aabb(vec3 origin, vec3 dir, vec3 bmin, vec3 bmax, inout float
     return tmax >= tmin;
 }
 
-bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t, bool second=false)
+float height_map_lookup(vec2 r)
 {
-  uint node_queue[50];
+    if (int(floor(r.x)) > height_map_width || int(floor(r.x)) < 0 || int(floor(r.y)) > height_map_height || int(floor(r.y)) < 0)
+    {
+        return -1.0;
+    }
+    return height_map[int(floor(r.y))*height_map_width + int(floor(r.x))];
+}
+
+vec3 height_map_lookup_normal(vec2 r)
+{
+    if (int(floor(r.x)) > height_map_width-1 || int(floor(r.x)) < 1 || int(floor(r.y)) > height_map_height-1 || int(floor(r.y)) < 1)
+    {
+        return vec3(0,0,1);
+    }
+    float h1 = height_map[int(floor(r.y))*height_map_width + int(floor(r.x-1))];
+    float h2 = height_map[int(floor(r.y))*height_map_width + int(floor(r.x+1))];
+    float h3 = height_map[int(floor(r.y-1))*height_map_width + int(floor(r.x))];
+    float h4 = height_map[int(floor(r.y+1))*height_map_width + int(floor(r.x))];
+    vec3 v1 = normalize(vec3(r.x+1,r.y,h2) - vec3(r.x-1,r.y,h1));
+    vec3 v2 = normalize(vec3(r.x,r.y+1,h2) - vec3(r.x,r.y-1,h1));
+    return normalize(cross(v1, v2));
+}
+
+bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t, uint node_queue[length])
+{
+
   //vec3 ix_queue[50];
   int node_queue_front_pointer = 0;
   int node_queue_back_pointer = 0;
@@ -129,22 +160,44 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
             hit = ray_intersect_aabb(origin, dir, bmin, bmax, tmin, tmax);
             if (hit)
             {
-                if (second)
-                {
-                    //return false;
-                }
                 //ix_queue[node_queue_back_pointer] = ix_queue[node_queue_front_pointer] + dir*tmin*0.99;
                 node_queue[node_queue_back_pointer] = child_node;
-                node_queue_back_pointer = (node_queue_back_pointer + 1) % 50;
+                node_queue_back_pointer = (node_queue_back_pointer + 1) % length;
             }
           }
         }
       }
     }
-    node_queue_front_pointer = (node_queue_front_pointer + 1) % 50;
+    node_queue_front_pointer = (node_queue_front_pointer + 1) % length;
   }
   return false;
 }
+
+bool ray_into_height_map(vec3 origin, vec3 dir, inout float t, uint node_queue[length], inout vec3 norm)
+{
+    float inc = 1.0;
+    t = 0;
+    const float max_inc = 200;
+    vec3 cur_loc = origin;
+    while (t < max_inc)
+    {
+        float cur_height = height_map_lookup(cur_loc.xy);
+        if (cur_loc.z < cur_height)
+        {
+            norm = height_map_lookup_normal(cur_loc.xy);
+            return true;
+        }
+        t += 1.0;
+        cur_loc += dir*inc;
+    }
+    return false;
+}
+
+vec3 reflect(vec3 d, vec3 n)
+{
+    return d - 2*(dot(d,n))*n;
+}
+
 
 vec3 gen_ray(float x, float y)
 {
@@ -156,8 +209,8 @@ vec3 gen_ray(float x, float y)
 
 void main()
 {
-    
-    vec3 light_dir = normalize(vec3(0,-1,-1));
+    uint node_queue[length];
+    vec3 light_dir = normalize(vec3(0,-1,-0.2));
 	const ivec2 dims = imageSize(tex_out);
 	const ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 
@@ -165,20 +218,29 @@ void main()
     float t; 
     float tmax;
     bool hit = false;
-    hit = ray_into_height_map_quadtree(camera_loc, ray, 0, t);
+    //hit = ray_into_height_map_quadtree(camera_loc, ray, 0, t, node_queue);
+    vec3 norm;
+    hit = ray_into_height_map(camera_loc, ray, t, node_queue, norm);
     float height_map_val = 0;
     if (hit)
     {
         vec3 intersect = camera_loc + ray*t*0.99;
         //intersect.z += 10;
-        hit = ray_into_height_map_quadtree(intersect, -light_dir, 0, t, true);
+        vec3 norm2;
+        hit = ray_into_height_map(intersect, -light_dir, t, node_queue, norm2);
+        bool ref_hit = ray_into_height_map(intersect, -reflect(ray, norm), t, node_queue, norm2);
+
+        if (!ref_hit)
+        {
+            //height_map_val += 0.3;
+        }
         if (!hit)
         {
-            height_map_val = 1.0;
+            height_map_val += dot(norm, -light_dir);
         }
     }
 
-	//float height_map_val = 0.5;//height_map[pixel_coords.y*dims.x + pixel_coords.x];
+	//height_map_val = height_map_lookup(pixel_coords.x, pixel_coords.y);
 	imageStore(tex_out, pixel_coords, height_map_val*vec4(1));
 }
 
