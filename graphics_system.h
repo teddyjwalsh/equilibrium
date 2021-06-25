@@ -99,6 +99,7 @@ public:
         }
         height_map_buffer->set_data(height_map_vector);
 
+        float block_size = 1;
         int qt_x_size = 128;
         int qt_y_size = 128;
         for (int i = 0; i < qt_x_size; i += 1)
@@ -106,7 +107,7 @@ public:
             for (int j = 0; j < qt_y_size; j += 1)
             {
                 double height = _distribution(_generator);
-                _quadtree.add_node(glm::vec3(i, j, 0), 1.0, height);
+                _quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
             }
         }
         _quadtree.load_nodes();

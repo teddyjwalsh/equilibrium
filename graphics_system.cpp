@@ -71,10 +71,10 @@ bool ray_intersect_aabb(vec3 origin, vec3 dir, vec3 bmin, vec3 bmax, inout float
     tmax = min(tmax, max(tz1, tz2));
 
     //bool hit = tmax >= tmin;
-    return tmax >= tmin && tmin > 0;
+    return tmax >= tmin;
 }
 
-bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t)
+bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t, bool second=false)
 {
   uint node_queue[50];
   //vec3 ix_queue[50];
@@ -110,8 +110,11 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
         vec3 bmin = (nodes[root_node].loc);
         vec3 bmax = (nodes[root_node].loc) + vec3(nodes[root_node].size, nodes[root_node].size, nodes[root_node].max_height);
       	hit = ray_intersect_aabb(origin, dir, bmin, bmax, tmin, tmax);
-	t = tmin;
+        if (tmin > 0)
+        {
+	    t = tmin;
         return true;
+        }
       }
       else
       {
@@ -126,6 +129,10 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
             hit = ray_intersect_aabb(origin, dir, bmin, bmax, tmin, tmax);
             if (hit)
             {
+                if (second)
+                {
+                    //return false;
+                }
                 //ix_queue[node_queue_back_pointer] = ix_queue[node_queue_front_pointer] + dir*tmin*0.99;
                 node_queue[node_queue_back_pointer] = child_node;
                 node_queue_back_pointer = (node_queue_back_pointer + 1) % 50;
@@ -163,8 +170,8 @@ void main()
     if (hit)
     {
         vec3 intersect = camera_loc + ray*t*0.99;
-        //intersect.z += 0.1;
-        hit = ray_into_height_map_quadtree(intersect, -light_dir, 0, t);
+        //intersect.z += 10;
+        hit = ray_into_height_map_quadtree(intersect, -light_dir, 0, t, true);
         if (!hit)
         {
             height_map_val = 1.0;
