@@ -98,6 +98,7 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
     vec3 bmax = nodes[root_node].loc + vec3(nodes[root_node].size, nodes[root_node].size, nodes[root_node].max_height);
     float tmin = 0; 
     float tmax = 0;
+    t = 100000;
     hit = ray_intersect_aabb(origin, dir, bmin, bmax, tmin, tmax);
 */
 
@@ -106,6 +107,10 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
       //t = tmin;
       if (nodes[root_node].is_object > 0)
       {
+        vec3 bmin = (nodes[root_node].loc);
+        vec3 bmax = (nodes[root_node].loc) + vec3(nodes[root_node].size, nodes[root_node].size, nodes[root_node].max_height);
+      	hit = ray_intersect_aabb(origin, dir, bmin, bmax, tmin, tmax);
+	t = tmin;
         return true;
       }
       else
