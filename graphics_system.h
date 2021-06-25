@@ -88,7 +88,7 @@ public:
         ray_camera.f = 0.5;
         ray_camera.width = 1.0;
         ray_camera.height = y_res * 1.0 / x_res;
-        ray_camera.location = glm::vec3(20, 120, 30);
+        ray_camera.location = glm::vec3(140, 140, 30);
         ray_camera.set_look(glm::normalize(glm::vec3(64, 64, 0) - ray_camera.location));
         
         auto height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
@@ -101,9 +101,9 @@ public:
 
         int qt_x_size = 128;
         int qt_y_size = 128;
-        for (int i = 0; i < qt_x_size; ++i)
+        for (int i = 0; i < qt_x_size; i += 1)
         {
-            for (int j = 0; j < qt_y_size; ++j)
+            for (int j = 0; j < qt_y_size; j += 1)
             {
                 double height = _distribution(_generator);
                 _quadtree.add_node(glm::vec3(i, j, 0), 1.0, height);

@@ -77,7 +77,7 @@ bool ray_intersect_aabb(vec3 origin, vec3 dir, vec3 bmin, vec3 bmax, inout float
 bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t)
 {
   uint node_queue[50];
-  vec3 ix_queue[50];
+  //vec3 ix_queue[50];
   int node_queue_front_pointer = 0;
   int node_queue_back_pointer = 0;
   node_queue[node_queue_back_pointer] = root_node;
@@ -90,7 +90,7 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
   //hit = ray_intersect_aabb(origin, dir, nodes[noder].loc, nodes[noder].loc + vec3(nodes[noder].size, nodes[noder].size, nodes[noder].max_height), tmin, tmax);
   //return hit;
   
-  while (node_queue_front_pointer < node_queue_back_pointer && node_queue_back_pointer < 50)
+  while (node_queue_front_pointer != node_queue_back_pointer)// && node_queue_back_pointer < 4)
   {
     root_node = node_queue[node_queue_front_pointer];
 /*
@@ -123,13 +123,13 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
             {
                 //ix_queue[node_queue_back_pointer] = ix_queue[node_queue_front_pointer] + dir*tmin*0.99;
                 node_queue[node_queue_back_pointer] = child_node;
-                node_queue_back_pointer += 1;
+                node_queue_back_pointer = (node_queue_back_pointer + 1) % 50;
             }
           }
         }
       }
     }
-    node_queue_front_pointer += 1;
+    node_queue_front_pointer = (node_queue_front_pointer + 1) % 50;
   }
   return false;
 }
@@ -159,8 +159,8 @@ void main()
     {
         vec3 intersect = camera_loc + ray*t*0.99;
         //intersect.z += 0.1;
-        //hit = ray_into_height_map_quadtree(intersect, -light_dir, 0, t);
-        //if (!hit)
+        hit = ray_into_height_map_quadtree(intersect, -light_dir, 0, t);
+        if (!hit)
         {
             height_map_val = 1.0;
         }
