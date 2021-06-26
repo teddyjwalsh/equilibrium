@@ -35,8 +35,6 @@ uniform float max_height;
 const float camera_f = 0.5;
 const int length = 50;
 
-
-
 ivec4 offset_to_sorted_children(vec3 offset)
 {
     if (offset.x < 0 && offset.y < 0)
@@ -180,7 +178,7 @@ bool ray_into_height_map(vec3 origin, vec3 dir, inout float t, uint node_queue[l
     float tmin, tmax;
     bool hit = ray_intersect_aabb(origin, dir, vec3(0), vec3(height_map_width, height_map_height, max_height), tmin, tmax);
     if (!hit) { return false; }
-    float inc = 1.0;
+    float inc = 3.0;
     t = 0;
     int count = 0;
     const float max_inc = 500;
@@ -193,6 +191,8 @@ bool ray_into_height_map(vec3 origin, vec3 dir, inout float t, uint node_queue[l
         float cur_height = height_map_lookup(cur_loc.xy);
         if (cur_loc.z < cur_height)
         {
+			
+			//ray_intersect_aabb(cur_loc, dir, vec3(floor(cur_loc.xy), 0), vec3(ceil(cur_loc.xy), cur_height), tmin, tmax);
             norm = height_map_lookup_normal(cur_loc.xy);
             intersect = cur_loc;
             intersect.z = cur_height;
