@@ -175,14 +175,19 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
 
 bool ray_into_height_map(vec3 origin, vec3 dir, inout float t, uint node_queue[length], inout vec3 norm, out vec3 intersect)
 {
+    float tmin, tmax;
+    bool hit = ray_intersect_aabb(origin, dir, nodes[0].loc, nodes[0].loc + vec3(nodes[0].size, nodes[0].size, nodes[0].max_height), tmin, tmax);
+    if (!hit) { return false; }
     float inc = 1.0;
     t = 0;
     int count = 0;
     const float max_inc = 500;
-    vec3 cur_loc = origin;
-    while (t < max_inc)
+    vec3 cur_loc = origin + dir*tmin;
+    float end_t = tmax - tmin;
+    if (tmin < 0) { cur_loc = origin; end_t = tmax; }
+    while (t < end_t)
     {
-        if (count % 150 == 99) { inc += 1; }
+        //if (count % 150 == 99) { inc += 1; }
         float cur_height = height_map_lookup(cur_loc.xy);
         if (cur_loc.z < cur_height)
         {
@@ -224,8 +229,10 @@ void main()
     float tmax;
     bool hit = false;
     //hit = ray_into_height_map_quadtree(camera_loc, ray, 0, t, node_queue);
+    
     vec3 norm;
     vec3 intersect;
+    vec3 ray_loc = camera_loc + ray*t;
     hit = ray_into_height_map(camera_loc, ray, t, node_queue, norm, intersect);
     float height_map_val = 0;
     if (hit)
@@ -235,7 +242,8 @@ void main()
         //intersect.z += 10;
         vec3 norm2;
         hit = ray_into_height_map(intersect, -light_dir, t, node_queue, norm2, intersect);
-        bool ref_hit = ray_into_height_map(intersect, reflect(ray, norm), t, node_queue, norm2, intersect);
+        bool ref_hit = true;
+        //bool ref_hit = ray_into_height_map(intersect, reflect(ray, norm), t, node_queue, norm2, intersect);
 
         if (!ref_hit)
         {
