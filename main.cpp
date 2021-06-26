@@ -21,6 +21,7 @@
 #include "camera_component.h"
 #include "graphics_system.h"
 #include "ray_camera_component.h"
+#include "eq_input_system.h"
 
 int main()
 {
@@ -28,16 +29,17 @@ int main()
     cm->add_array<CompRayCamera>();
     cm->add_array<CompGraphics>();
     cm->add_array<CompRenderableMesh>();
+    cm->add_array<CompPosition>();
+    cm->add_array<CompPickupper>();
+    cm->add_array<CompKeyState>();
     auto graphics_system = std::make_shared<GraphicsSystem>();
     cm->add_system(graphics_system);
-    cm->add_component<CompRayCamera>();
     cm->add_component<CompGraphics>();
-    auto is = std::make_shared<SysInput>();
+    auto is = std::make_shared<SysInputEq>();
     EntityId player = cm->add_entity({
                uint32_t(type_id<CompPosition>),
                uint32_t(type_id<CompPickupper>),
                uint32_t(type_id<CompRayCamera>),
-               uint32_t(type_id<CompPlayerTerrain>),
                uint32_t(type_id<CompKeyState>)});
     cm->add_system(is);
     cm->init_update();

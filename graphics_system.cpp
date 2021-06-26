@@ -101,7 +101,7 @@ vec3 height_map_lookup_normal(vec2 r)
     float h3 = height_map[int(floor(r.y-1))*height_map_width + int(floor(r.x))];
     float h4 = height_map[int(floor(r.y+1))*height_map_width + int(floor(r.x))];
     vec3 v1 = normalize(vec3(r.x+1,r.y,h2) - vec3(r.x-1,r.y,h1));
-    vec3 v2 = normalize(vec3(r.x,r.y+1,h2) - vec3(r.x,r.y-1,h1));
+    vec3 v2 = normalize(vec3(r.x,r.y+1,h4) - vec3(r.x,r.y-1,h3));
     return normalize(cross(v1, v2));
 }
 
@@ -173,22 +173,27 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
   return false;
 }
 
-bool ray_into_height_map(vec3 origin, vec3 dir, inout float t, uint node_queue[length], inout vec3 norm)
+bool ray_into_height_map(vec3 origin, vec3 dir, inout float t, uint node_queue[length], inout vec3 norm, out vec3 intersect)
 {
     float inc = 1.0;
     t = 0;
-    const float max_inc = 200;
+    int count = 0;
+    const float max_inc = 500;
     vec3 cur_loc = origin;
     while (t < max_inc)
     {
+        if (count % 150 == 99) { inc += 1; }
         float cur_height = height_map_lookup(cur_loc.xy);
         if (cur_loc.z < cur_height)
         {
             norm = height_map_lookup_normal(cur_loc.xy);
+            intersect = cur_loc;
+            intersect.z = cur_height;
             return true;
         }
-        t += 1.0;
+        t += inc;
         cur_loc += dir*inc;
+        count += 1;
     }
     return false;
 }
@@ -220,19 +225,21 @@ void main()
     bool hit = false;
     //hit = ray_into_height_map_quadtree(camera_loc, ray, 0, t, node_queue);
     vec3 norm;
-    hit = ray_into_height_map(camera_loc, ray, t, node_queue, norm);
+    vec3 intersect;
+    hit = ray_into_height_map(camera_loc, ray, t, node_queue, norm, intersect);
     float height_map_val = 0;
     if (hit)
     {
-        vec3 intersect = camera_loc + ray*t*0.99;
+        //float height = height_map_lookup(intersect.xy);
+        //intersect.z += 0.01;
         //intersect.z += 10;
         vec3 norm2;
-        hit = ray_into_height_map(intersect, -light_dir, t, node_queue, norm2);
-        bool ref_hit = ray_into_height_map(intersect, -reflect(ray, norm), t, node_queue, norm2);
+        hit = ray_into_height_map(intersect, -light_dir, t, node_queue, norm2, intersect);
+        bool ref_hit = ray_into_height_map(intersect, reflect(ray, norm), t, node_queue, norm2, intersect);
 
         if (!ref_hit)
         {
-            //height_map_val += 0.3;
+            height_map_val += 0.1;
         }
         if (!hit)
         {
@@ -242,6 +249,7 @@ void main()
 
 	//height_map_val = height_map_lookup(pixel_coords.x, pixel_coords.y);
 	imageStore(tex_out, pixel_coords, height_map_val*vec4(1));
+	//imageStore(tex_out, pixel_coords, vec4(norm, 1.0));
 }
 
 )V0G0N";

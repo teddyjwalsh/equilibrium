@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\camera_component.cpp" />
+    <ClCompile Include="..\eq_input_system.cpp" />
     <ClCompile Include="..\graphics_system.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\ray_camera_component.cpp" />
@@ -157,6 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera_component.h" />
+    <ClInclude Include="..\eq_input_system.h" />
     <ClInclude Include="..\FastNoiseLite.h" />
     <ClInclude Include="..\graphics_system.h" />
     <ClInclude Include="..\map.h" />
