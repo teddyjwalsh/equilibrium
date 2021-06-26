@@ -41,11 +41,11 @@ public:
         _quadtree(1024)
     {
         _type_name = "graphics";
-        _noise.add_noise(15, 1.0);
+        //_noise.add_noise(15, 1.0);
         _noise.add_noise(5, 2.0);
         _noise.add_noise(2, 5.0);
-        _noise.add_noise(0.5, 10.0);
-        _noise.add_noise(0.01, 50.0);
+        _noise.add_noise(0.5, 20.0);
+        _noise.add_noise(0.01, 100.0);
     }
 
     virtual void init_update() override 
@@ -112,7 +112,7 @@ public:
             {
                 double height = _noise.get_point(i, j);
                 float dist_from_center = std::sqrt((i - qt_x_size / 2) * (i - qt_x_size / 2) + (j - qt_y_size / 2) * (j - qt_y_size / 2));
-                height += std::pow(std::sqrt(qt_y_size*qt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
+                //height += std::pow(std::sqrt(qt_y_size*qt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
                 //_quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
                 _height_map_vector[j * qt_x_size + i] = height;
                 max_height = std::max(max_height, height);
@@ -143,6 +143,11 @@ public:
         ray_camera.set_look(glm::normalize(glm::vec3(100, 200, 0) - ray_camera.location));
     }
 
+    int height_map_index(int x, int y)
+    {
+        return std::clamp(int(y), 0, _height_map_y - 1)* _height_map_x + std::clamp(int(x), 0, _height_map_x - 1);
+    }
+
     void update(double dt) 
     {
         // frame initialization
@@ -154,7 +159,7 @@ public:
 
         // set shader camera uniforms
         {
-            ray_camera.location.z = _height_map_vector[floor(ray_camera.location.y) * _height_map_x + floor(ray_camera.location.x)] + 100;
+            ray_camera.location.z = _height_map_vector[height_map_index(ray_camera.location.x, ray_camera.location.y)] + 100;
 
             _cs._program.use();
             _cs._program.set_uniform_3f("camera_loc", ray_camera.location);
