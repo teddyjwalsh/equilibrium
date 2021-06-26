@@ -25,6 +25,9 @@ class GraphicsSystem :
     bgfx::ComputeShader _cs;
     quadtree::QuadTree _quadtree;
     CombinedNoise _noise;
+    int _height_map_x;
+    int _height_map_y;
+    std::vector<float> _height_map_vector;
 
     std::default_random_engine _generator;
     std::normal_distribution<double> _distribution;
@@ -40,6 +43,7 @@ public:
         _type_name = "graphics";
         _noise.add_noise(1, 15.0);
         _noise.add_noise(5, 5.0);
+        _noise.add_noise(0.01, 50.0);
     }
 
     virtual void init_update() override 
@@ -88,33 +92,31 @@ public:
         _quad.set_mesh(quad_mesh);
         _quad.set_material(quad_mat);
         _mat = quad_mat;
-
-        auto& ray_camera = get_array<CompRayCamera>()[0];
-        ray_camera.f = 0.5;
-        ray_camera.width = 1.0;
-        ray_camera.height = y_res * 1.0 / x_res;
-        ray_camera.location = glm::vec3(10, 10, 60);
-        ray_camera.set_look(glm::normalize(glm::vec3(50, 50, 0) - ray_camera.location));
         
         auto height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
 
 
         float block_size = 1;
-        int qt_x_size = 1024;
-        int qt_y_size = 1024;
-        std::vector<float> height_map_vector(qt_x_size * qt_y_size);
+        int qt_x_size = 2048;
+        int qt_y_size = 2048;
+        _height_map_x = qt_x_size;
+        _height_map_y = qt_y_size;
+        _height_map_vector.resize(qt_x_size * qt_y_size);
         
-
+        double max_height;
         for (int i = 0; i < qt_x_size; i += 1)
         {
             for (int j = 0; j < qt_y_size; j += 1)
             {
                 double height = _noise.get_point(i, j);
-                _quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
-                height_map_vector[j * qt_x_size + i] = height;
+                float dist_from_center = std::sqrt((i - qt_x_size / 2) * (i - qt_x_size / 2) + (j - qt_y_size / 2) * (j - qt_y_size / 2));
+                height += std::pow(std::sqrt(qt_y_size*qt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
+                //_quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
+                _height_map_vector[j * qt_x_size + i] = height;
+                max_height = std::max(max_height, height);
             }
         }
-        height_map_buffer->set_data(height_map_vector, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+        height_map_buffer->set_data(_height_map_vector, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
         _quadtree.load_nodes();
 
         _cs.add_texture(quad_tex, 1);
@@ -127,8 +129,16 @@ public:
         _cs._program.use();
         _cs._program.set_uniform_i1(_cs._program.get_uniform_location("height_map_height"), qt_y_size);
         _cs._program.set_uniform_i1(_cs._program.get_uniform_location("height_map_width"), qt_x_size);
+        _cs._program.set_uniform_1f(_cs._program.get_uniform_location("max_height"), max_height);
 
         _cs.run();
+
+        auto& ray_camera = get_array<CompRayCamera>()[0];
+        ray_camera.f = 0.5;
+        ray_camera.width = 1.0;
+        ray_camera.height = y_res * 1.0 / x_res;
+        ray_camera.location = glm::vec3(100, 100, _height_map_vector[100 * qt_x_size + 100] + 100);
+        ray_camera.set_look(glm::normalize(glm::vec3(100, 200, 0) - ray_camera.location));
     }
 
     void update(double dt) 
@@ -142,6 +152,8 @@ public:
 
         // set shader camera uniforms
         {
+            ray_camera.location.z = _height_map_vector[floor(ray_camera.location.y) * _height_map_x + floor(ray_camera.location.x)] + 100;
+
             _cs._program.use();
             _cs._program.set_uniform_3f("camera_loc", ray_camera.location);
             _cs._program.set_uniform_3f("camera_look", ray_camera.look);
@@ -150,6 +162,7 @@ public:
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("camera_width"), ray_camera.width);
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("camera_height"), ray_camera.height);
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("camera_f"), ray_camera.f);
+
             _cs.run();
         }
 

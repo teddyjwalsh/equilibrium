@@ -22,10 +22,11 @@ class SysInputEq : public SysInput
 		{
 			double mouse_dx = key_state.mouse_pos_x - prev_mouse_pos_x;
 			double mouse_dy = key_state.mouse_pos_y - prev_mouse_pos_y;
-			glm::vec3 temp_look = cam->look;
-			temp_look += -cam->up * mouse_dy * 0.01;
-			temp_look += -cam->right * mouse_dx * 0.01;
-			cam->set_look(glm::normalize(temp_look));
+			cam->location += glm::vec3(mouse_dx, mouse_dy,0)*0.1;
+			//glm::vec3 temp_look = cam->look;
+			//temp_look += -cam->up * mouse_dy * 0.01;
+			//temp_look += -cam->right * mouse_dx * 0.01;
+			//cam->set_look(glm::normalize(temp_look));
 		}
 		if (key_state.pressed[GLFW_KEY_W])
 		{
