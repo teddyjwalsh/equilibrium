@@ -41,8 +41,10 @@ public:
         _quadtree(1024)
     {
         _type_name = "graphics";
-        _noise.add_noise(1, 15.0);
-        _noise.add_noise(5, 5.0);
+        _noise.add_noise(15, 1.0);
+        _noise.add_noise(5, 2.0);
+        _noise.add_noise(2, 5.0);
+        _noise.add_noise(0.5, 10.0);
         _noise.add_noise(0.01, 50.0);
     }
 
