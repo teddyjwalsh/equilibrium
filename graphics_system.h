@@ -113,7 +113,7 @@ public:
             {
                 double height = _noise.get_point(i, j);
                 float dist_from_center = std::sqrt((i - qt_x_size / 2) * (i - qt_x_size / 2) + (j - qt_y_size / 2) * (j - qt_y_size / 2));
-                height += 3*std::pow(std::sqrt(qt_y_size*qrt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
+                height += 3*std::pow(std::sqrt(qt_y_size*qt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
                 //_quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
                 _height_map_vector[j * qt_x_size + i] = height;
                 max_height = std::max(max_height, height);
