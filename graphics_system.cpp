@@ -266,7 +266,7 @@ void main()
         init_ray.travel = 0;//length(hit_loc - init_ray.loc);
         float init_dist = length(hit_loc - init_ray.loc);
         num_bounces = 3;//int(clamp(80.0/init_dist, 2.0,3.0));
-        int num_avgs = 4;
+        int num_avgs = 3;
         //num_avgs = 2;//int(clamp(50.0/init_dist, 1.0,5.0));
         for (int j = 1; j < num_avgs; ++j)
         {
@@ -306,10 +306,10 @@ void main()
 				result = ray_into_height_map(new_ray.loc, new_ray.dir, t, node_queue, norm, hit_loc);
 				if (!result)
 				{
-					light_sum += vec4(new_ray.color,1.0)*vec4(0.05,0.05,0.1,1.0)*travel_factor;
+					light_sum += vec4(new_ray.color,1.0)*vec4(0.1,0.1,0.2,1.0)*travel_factor;
 					break;
 				}
-				new_ray.color *= 0.9;
+				new_ray.color *= 0.3;
 				count_bounces += 1;
             }
         }
