@@ -22,6 +22,7 @@
 #include "graphics_system.h"
 #include "ray_camera_component.h"
 #include "eq_input_system.h"
+#include "time_component.h"
 
 int main()
 {
@@ -32,9 +33,13 @@ int main()
     cm->add_array<CompPosition>();
     cm->add_array<CompPickupper>();
     cm->add_array<CompKeyState>();
+    cm->add_array<CompTime>();
     auto graphics_system = std::make_shared<GraphicsSystem>();
+    auto time_system = std::make_shared<SysTime>();
     cm->add_system(graphics_system);
+    cm->add_system(time_system);
     cm->add_component<CompGraphics>();
+    cm->add_component<CompTime>();
     auto is = std::make_shared<SysInputEq>();
     EntityId player = cm->add_entity({
                uint32_t(type_id<CompPosition>),
@@ -42,6 +47,7 @@ int main()
                uint32_t(type_id<CompRayCamera>),
                uint32_t(type_id<CompKeyState>)});
     cm->add_system(is);
+    cm->add_system(time_system);
     cm->init_update();
     while(1)
     {

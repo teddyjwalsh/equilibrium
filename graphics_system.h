@@ -11,6 +11,7 @@
 #include "ray_camera_component.h"
 #include "quadtree.h"
 #include "noise_gen.h"
+#include "time_component.h"
 
 extern std::string light_compute_shader;
 
@@ -156,6 +157,7 @@ public:
         // fetch necessary components
         auto& meshes = get_array<CompRenderableMesh>();
         auto& ray_camera = get_array<CompRayCamera>()[0];
+        auto& time_comp = get_array<CompTime>()[0];
 
         // set shader camera uniforms
         {
@@ -169,6 +171,7 @@ public:
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("camera_width"), ray_camera.width);
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("camera_height"), ray_camera.height);
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("camera_f"), ray_camera.f);
+            _cs._program.set_uniform_1f(_cs._program.get_uniform_location("time"), time_comp.current_time);
 
             _cs.run();
         }

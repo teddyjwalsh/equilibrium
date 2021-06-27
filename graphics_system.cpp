@@ -41,6 +41,7 @@ uniform vec3 camera_up;
 uniform int height_map_width;
 uniform int height_map_height;
 uniform float max_height;
+uniform float time;
 const float camera_f = 0.5;
 const int queue_length = 50;
 
@@ -237,7 +238,7 @@ vec3 gen_ray(float x, float y)
 void main()
 {
     uint node_queue[queue_length];
-    vec3 light_dir = normalize(vec3(0,-1,-0.2));
+    vec3 light_dir = normalize(vec3(cos(time*0.09), 0, sin(time*0.09)));
 	const ivec2 dims = imageSize(tex_out);
 	const ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 
@@ -260,7 +261,7 @@ void main()
     vec4 light_sum = vec4(0,0,0,1);
 	vec3 reflected = reflect(norm, ray);
 	int count_bounces = 0;
-    if (false && result)
+    if (result)
     {
         init_ray.travel = 0;//length(hit_loc - init_ray.loc);
         float init_dist = length(hit_loc - init_ray.loc);
@@ -320,7 +321,7 @@ void main()
                                     ,clamp(1 - pow(pixel_coords.y,2)/500000.0,0.8,0.98),
                                     1.0,1));
     }
-	imageStore(tex_out, pixel_coords, vec4(norm, 1.0));
+	//imageStore(tex_out, pixel_coords, vec4(norm, 1.0));
 }
 
 )V0G0N";
