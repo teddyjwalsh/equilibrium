@@ -33,6 +33,9 @@
     <ClCompile Include="..\eq_input_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\height_map_component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FastNoiseLite.h">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\eq_input_system.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\height_map_component.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -12,6 +12,7 @@
 #include "quadtree.h"
 #include "noise_gen.h"
 #include "time_component.h"
+#include "height_map_component.h"
 
 extern std::string light_compute_shader;
 
@@ -24,7 +25,6 @@ class GraphicsSystem :
     bgfx::Camera _camera;
     std::shared_ptr<bgfx::Material> _mat;
     bgfx::ComputeShader _cs;
-    quadtree::QuadTree _quadtree;
     CombinedNoise _noise;
     int _height_map_x;
     int _height_map_y;
@@ -38,8 +38,7 @@ public:
     GraphicsSystem():
         _context(1920,1080),
         _camera(1,0.8),
-        _distribution(5.0, 2.5),
-        _quadtree(1024)
+        _distribution(5.0, 2.5)
     {
         _type_name = "graphics";
         //_noise.add_noise(15, 1.0);
@@ -51,12 +50,20 @@ public:
 
     virtual void init_update() override 
     {
+        float block_size = 1;
+        int qt_x_size = 2048;
+        int qt_y_size = 2048;
+        _height_map_x = qt_x_size;
+        _height_map_y = qt_y_size;
+
         //_camera.set_position(glm::vec3(0.5, 0.5, 2));
         //_camera.set_look_target(glm::vec3(0.5, 0.5, 0));
         _camera.set_position(glm::vec3(0.5,0.75,0.5));
         _camera.set_look_target(glm::vec3(0.5,0,0.5));
 
         auto& graphics_comp = get_array<CompGraphics>()[0];
+        auto& height_map = get_array<CompHeightMap>()[0];
+        height_map.quadtree = quadtree::QuadTree(_height_map_x);
         graphics_comp.window = _context.get_window();
         int x_res, y_res;
         graphics_comp.get_window_size(x_res, y_res);
@@ -98,12 +105,6 @@ public:
         
         auto height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
 
-
-        float block_size = 1;
-        int qt_x_size = 2048;
-        int qt_y_size = 2048;
-        _height_map_x = qt_x_size;
-        _height_map_y = qt_y_size;
         _height_map_vector.resize(qt_x_size * qt_y_size);
         
         double max_height;
@@ -114,16 +115,16 @@ public:
                 double height = _noise.get_point(i, j);
                 float dist_from_center = std::sqrt((i - qt_x_size / 2) * (i - qt_x_size / 2) + (j - qt_y_size / 2) * (j - qt_y_size / 2));
                 height += 3*std::pow(std::sqrt(qt_y_size*qt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
-                //_quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
+                height_map.quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
                 _height_map_vector[j * qt_x_size + i] = height;
                 max_height = std::max(max_height, height);
             }
         }
         height_map_buffer->set_data(_height_map_vector, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
-        _quadtree.load_nodes();
+        height_map.quadtree.load_nodes();
 
         _cs.add_texture(quad_tex, 1);
-        _cs.add_buffer_input(_quadtree.get_buffer(), 2);
+        _cs.add_buffer_input(height_map.quadtree.get_buffer(), 2);
         _cs.add_buffer_input(height_map_buffer, 3);
         _cs.set_code(light_compute_shader);
         _cs.set_call_size(x_res, y_res, 1);

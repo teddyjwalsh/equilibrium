@@ -1,9 +1,56 @@
 #pragma once
 
 #include <vector>
+#include <tuple>
+#include <algorithm>
 
 #include "glm/glm.hpp"
 #include "buffer.h"
+
+inline glm::ivec4 offset_to_sorted_children(glm::vec3 offset)
+{
+	if (offset.x < 0 && offset.y < 0)
+	{
+		return glm::ivec4(0, 1, 2, 3);
+	}
+	if (offset.x > 0 && offset.y < 0)
+	{
+		return glm::ivec4(1, 3, 0, 2);
+	}
+	if (offset.x > 0 && offset.y > 0)
+	{
+		return glm::ivec4(3, 1, 2, 0);
+	}
+	if (offset.x < 0 && offset.y > 0)
+	{
+		return glm::ivec4(2, 0, 3, 1);
+	}
+	return glm::ivec4(0, 1, 2, 3);
+}
+
+inline std::tuple<bool, float, float> ray_intersect_aabb(glm::vec3 origin, glm::vec3 dir, glm::vec3 bmin, glm::vec3 bmax)
+{
+	float tx1 = (bmin.x - origin.x) / dir.x;
+	float tx2 = (bmax.x - origin.x) / dir.x;
+
+	float tmin = std::min(tx1, tx2);
+	float tmax = std::max(tx1, tx2);
+
+	float ty1 = (bmin.y - origin.y) / dir.y;
+	float ty2 = (bmax.y - origin.y) / dir.y;
+
+	tmin = std::max(tmin, std::min(ty1, ty2));
+	tmax = std::min(tmax, std::max(ty1, ty2));
+
+	float tz1 = (bmin.z - origin.z) / dir.z;
+	float tz2 = (bmax.z - origin.z) / dir.z;
+
+	tmin = std::max(tmin, std::min(tz1, tz2));
+	tmax = std::min(tmax, std::max(tz1, tz2));
+
+	//bool hit = tmax >= tmin;
+	return std::make_tuple(tmax >= tmin, tmin, tmax);
+}
 
 namespace quadtree
 {
@@ -77,6 +124,36 @@ public:
 	std::shared_ptr<bgfx::Buffer<QuadTreeNode>> get_buffer()
 	{
 		return _buffer;
+	}
+
+	std::tuple<bool, glm::vec3> ray_into_height_map_quadtree(const glm::vec3& origin, const glm::vec3& direction, int root)
+	{
+		auto cur_box = std::make_pair(_nodes[root].location, _nodes[root].location + glm::vec3(_nodes[root].size, _nodes[root].size, _nodes[root].max_height));
+		auto [hit, tmin, tmax] = ray_intersect_aabb(origin, direction, cur_box.first, cur_box.second);
+		if (hit)
+		{
+			glm::vec3 intersect = (origin + direction * tmin);
+			if (_nodes[root].is_object)
+			{
+				return std::make_tuple(hit, intersect);
+			}
+			else
+			{
+				auto sorted_children = offset_to_sorted_children(origin - (_nodes[root].location + _nodes[root].size/2.0f));
+				for (int child_index = 0; child_index < 4; ++child_index)
+				{
+					if (_nodes[root].children[child_index])
+					{
+						std::tie(hit, intersect) = ray_into_height_map_quadtree(origin, direction, _nodes[root].children[child_index]);
+						if (hit)
+						{
+							return std::make_tuple(hit, intersect);
+						}
+					}
+				}
+			}
+		}
+		return std::make_tuple(false, glm::vec3(0));
 	}
 };
 

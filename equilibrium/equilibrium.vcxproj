@@ -152,6 +152,7 @@
     <ClCompile Include="..\camera_component.cpp" />
     <ClCompile Include="..\eq_input_system.cpp" />
     <ClCompile Include="..\graphics_system.cpp" />
+    <ClCompile Include="..\height_map_component.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\ray_camera_component.cpp" />
     <ClCompile Include="..\renderable_mesh_component.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\eq_input_system.h" />
     <ClInclude Include="..\FastNoiseLite.h" />
     <ClInclude Include="..\graphics_system.h" />
+    <ClInclude Include="..\height_map_component.h" />
     <ClInclude Include="..\map.h" />
     <ClInclude Include="..\noise.h" />
     <ClInclude Include="..\noise_gen.h" />

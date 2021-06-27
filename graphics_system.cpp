@@ -119,7 +119,7 @@ vec3 height_map_lookup_normal(vec2 r)
     return normalize(cross(v1, v2));
 }
 
-bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t, uint node_queue[queue_length])
+bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout float t, uint node_queue[queue_length], out vec3 norm, out vec3 intersect)
 {
 
   //vec3 ix_queue[50];
@@ -158,6 +158,9 @@ bool ray_into_height_map_quadtree(vec3 origin, vec3 dir, uint root_node, inout f
         if (tmin > 0)
         {
 	    t = tmin;
+        
+        intersect = origin + dir*t;
+        norm = height_map_lookup_normal(intersect.xy);
         return true;
         }
       }
@@ -246,11 +249,12 @@ void main()
     float t; 
     float tmax;
     bool hit = false;
-    //hit = ray_into_height_map_quadtree(camera_loc, ray, 0, t, node_queue);
+    
     bool result;
     vec3 norm;
     vec3 hit_loc;
     result = ray_into_height_map(camera_loc, ray, t, node_queue, norm, hit_loc);
+    //result = ray_into_height_map_quadtree(camera_loc, ray, 0, t, node_queue, norm, hit_loc);
 	Ray init_ray;
 	init_ray.loc = camera_loc,
 	init_ray.dir = ray;
@@ -296,6 +300,8 @@ void main()
 				}
                 
 				result = ray_into_height_map(new_ray.loc, hit_2_light, t, node_queue, norm, hit_loc);
+                //result = ray_into_height_map_quadtree(new_ray.loc, hit_2_light, 0, t, node_queue, norm, hit_loc);
+
 				float travel_factor = 1/pow(new_ray.travel + 1,2);
 				if (!result)
 				{
@@ -304,6 +310,7 @@ void main()
 				}
 				
 				result = ray_into_height_map(new_ray.loc, new_ray.dir, t, node_queue, norm, hit_loc);
+                //result = ray_into_height_map_quadtree(new_ray.loc, new_ray.dir, 0, t, node_queue, norm, hit_loc);
 				if (!result)
 				{
 					light_sum += vec4(new_ray.color,1.0)*vec4(0.1,0.1,0.2,1.0)*travel_factor;
