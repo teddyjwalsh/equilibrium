@@ -31,6 +31,10 @@ layout(binding = 3, std430) buffer HeightMap
 	float height_map[ ];
 };
 
+layout(binding = 5, std430) buffer ColorMap
+{
+	vec4 color_map[ ];
+};
 
 uniform vec3 camera_loc;
 uniform vec3 camera_look;
@@ -102,6 +106,15 @@ float height_map_lookup(vec2 r)
         return -1.0;
     }
     return height_map[int(floor(r.y))*height_map_width + int(floor(r.x))];
+}
+
+vec3 color_map_lookup(vec2 r)
+{
+    if (int(floor(r.x)) > height_map_width || int(floor(r.x)) < 0 || int(floor(r.y)) > height_map_height || int(floor(r.y)) < 0)
+    {
+        return vec3(0);
+    }
+    return color_map[int(floor(r.y))*height_map_width + int(floor(r.x))].xyz;
 }
 
 vec3 height_map_lookup_normal(vec2 r)
@@ -301,7 +314,7 @@ void main()
                 
 				result = ray_into_height_map(new_ray.loc, hit_2_light, t, node_queue, norm, hit_loc);
                 //result = ray_into_height_map_quadtree(new_ray.loc, hit_2_light, 0, t, node_queue, norm, hit_loc);
-
+                new_ray.color *= (color_map_lookup(hit_loc.xy));
 				float travel_factor = 1/pow(new_ray.travel + 1,2);
 				if (!result)
 				{
@@ -316,7 +329,7 @@ void main()
 					light_sum += vec4(new_ray.color,1.0)*vec4(0.1,0.1,0.2,1.0)*travel_factor;
 					break;
 				}
-				new_ray.color *= 0.3;
+				
 				count_bounces += 1;
             }
         }

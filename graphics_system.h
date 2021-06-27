@@ -28,7 +28,7 @@ class GraphicsSystem :
     CombinedNoise _noise;
     int _height_map_x;
     int _height_map_y;
-    std::vector<float> _height_map_vector;
+    
 
     std::default_random_engine _generator;
     std::normal_distribution<double> _distribution;
@@ -104,8 +104,10 @@ public:
         _mat = quad_mat;
         
         auto height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
+        auto height_map_color_buffer = std::make_shared<bgfx::Buffer<glm::vec4>>();
 
-        _height_map_vector.resize(qt_x_size * qt_y_size);
+        height_map.height_array.resize(qt_x_size * qt_y_size);
+        height_map.color_array.resize(qt_x_size * qt_y_size);
         
         double max_height;
         for (int i = 0; i < qt_x_size; i += 1)
@@ -116,16 +118,19 @@ public:
                 float dist_from_center = std::sqrt((i - qt_x_size / 2) * (i - qt_x_size / 2) + (j - qt_y_size / 2) * (j - qt_y_size / 2));
                 height += 3*std::pow(std::sqrt(qt_y_size*qt_y_size/4 + qt_y_size*qt_y_size/4) - dist_from_center, 1.7)/2000.0;
                 height_map.quadtree.add_node(glm::vec3(i*block_size, j*block_size, 0), block_size, height);
-                _height_map_vector[j * qt_x_size + i] = height;
+                height_map.height_array[j * qt_x_size + i] = height;
+                height_map.color_array[j * qt_x_size + i] = glm::vec4(1,1,1,1);
                 max_height = std::max(max_height, height);
             }
         }
-        height_map_buffer->set_data(_height_map_vector, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+        height_map_buffer->set_data(height_map.height_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+        height_map_color_buffer->set_data(height_map.color_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
         height_map.quadtree.load_nodes();
 
         _cs.add_texture(quad_tex, 1);
         _cs.add_buffer_input(height_map.quadtree.get_buffer(), 2);
         _cs.add_buffer_input(height_map_buffer, 3);
+        _cs.add_buffer_input(height_map_color_buffer, 5);
         _cs.set_code(light_compute_shader);
         _cs.set_call_size(x_res, y_res, 1);
         _cs.compile();
@@ -141,7 +146,7 @@ public:
         ray_camera.f = 0.5;
         ray_camera.width = 1.0;
         ray_camera.height = y_res * 1.0 / x_res;
-        ray_camera.location = glm::vec3(100, 100, _height_map_vector[100 * qt_x_size + 100] + 100);
+        ray_camera.location = glm::vec3(100, 100, height_map.height_array[100 * qt_x_size + 100] + 100);
         ray_camera.set_look(glm::normalize(glm::vec3(100, 200, 0) - ray_camera.location));
     }
 
@@ -159,10 +164,11 @@ public:
         auto& meshes = get_array<CompRenderableMesh>();
         auto& ray_camera = get_array<CompRayCamera>()[0];
         auto& time_comp = get_array<CompTime>()[0];
+        auto& height_map = get_array<CompHeightMap>()[0];
 
         // set shader camera uniforms
         {
-            ray_camera.location.z = _height_map_vector[height_map_index(ray_camera.location.x, ray_camera.location.y)] + 100;
+            ray_camera.location.z = height_map.height_array[height_map_index(ray_camera.location.x, ray_camera.location.y)] + 100;
 
             _cs._program.use();
             _cs._program.set_uniform_3f("camera_loc", ray_camera.location);
