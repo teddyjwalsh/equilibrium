@@ -157,6 +157,7 @@
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\ray_camera_component.cpp" />
     <ClCompile Include="..\renderable_mesh_component.cpp" />
+    <ClCompile Include="..\terrain_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera_component.h" />
@@ -171,6 +172,7 @@
     <ClInclude Include="..\quadtree.h" />
     <ClInclude Include="..\ray_camera_component.h" />
     <ClInclude Include="..\renderable_mesh_component.h" />
+    <ClInclude Include="..\terrain_system.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

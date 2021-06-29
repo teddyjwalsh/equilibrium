@@ -15,7 +15,7 @@ class SysInputEq : public SysInput
 	{
 		auto& key_state = get_array<CompKeyState>()[0];
 		auto& height_map = get_array<CompHeightMap>()[0];
-		auto cam = key_state.sibling<CompRayCamera>();
+		auto cam = key_state.sibling<CompCamera>();
 		auto& graphics = get_array<CompGraphics>()[0];
 		int glfw_x_res, glfw_y_res;
 		graphics.get_window_size(glfw_x_res, glfw_y_res);
@@ -28,7 +28,7 @@ class SysInputEq : public SysInput
 		{
 			double mouse_dx = key_state.mouse_pos_x - prev_mouse_pos_x;
 			double mouse_dy = key_state.mouse_pos_y - prev_mouse_pos_y;
-			cam->location += glm::vec3(-mouse_dx, mouse_dy,0)*0.1;
+			cam->camera.set_position(glm::vec3(-mouse_dx, mouse_dy,0)*0.1 + cam->camera.get_position());
 			//glm::vec3 temp_look = cam->look;
 			//temp_look += -cam->up * mouse_dy * 0.01;
 			//temp_look += -cam->right * mouse_dx * 0.01;
@@ -36,6 +36,7 @@ class SysInputEq : public SysInput
 		}
 		if (key_state.push[1])
 		{
+			/*
 			printf("PUSSHHH\n");
 			auto dir = cam->get_ray((key_state.mouse_pos_x * 1.0 / glfw_x_res), (1.0 - key_state.mouse_pos_y * 1.0 / glfw_y_res));
 			auto [hit, intersect] = height_map.quadtree.ray_into_height_map_quadtree(cam->location, dir);
@@ -44,10 +45,11 @@ class SysInputEq : public SysInput
 			printf("Mouse pos: %f, %f\n", cam->location.x, cam->location.y);
  			height_map.color_array[height_map.height_map_index(intersect.x, intersect.y)] = glm::vec4(1,0,0,1);
 			height_map.color_changed = true;
+			*/
 		}
 		if (key_state.pressed[GLFW_KEY_W])
 		{
-			cam->location += cam->look;
+			cam->camera.set_position(cam->camera.get_look() + cam->camera.get_position());
 		}
 
 	}

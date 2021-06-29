@@ -22,13 +22,16 @@
 #include "graphics_system.h"
 #include "ray_camera_component.h"
 #include "eq_input_system.h"
+#include "terrain_system.h"
+#include "gl_graphics_system.h"
 #include "time_component.h"
 #include "height_map_component.h"
+
 
 int main()
 {
     auto cm = std::make_shared<ComponentManager>();
-    cm->add_array<CompRayCamera>();
+    cm->add_array<CompCamera>();
     cm->add_array<CompGraphics>();
     cm->add_array<CompRenderableMesh>();
     cm->add_array<CompPosition>();
@@ -36,10 +39,12 @@ int main()
     cm->add_array<CompKeyState>();
     cm->add_array<CompTime>();
     cm->add_array<CompHeightMap>();
-    auto graphics_system = std::make_shared<GraphicsSystem>();
     auto time_system = std::make_shared<SysTime>();
+    auto terrain_system = std::make_shared<SysTerrain>();
+    auto graphics_system = std::make_shared<SysGLGraphics>();
     cm->add_system(graphics_system);
     cm->add_system(time_system);
+    cm->add_system(terrain_system);
     cm->add_component<CompGraphics>();
     cm->add_component<CompTime>();
 
@@ -47,12 +52,13 @@ int main()
     EntityId player = cm->add_entity({
                uint32_t(type_id<CompPosition>),
                uint32_t(type_id<CompPickupper>),
-               uint32_t(type_id<CompRayCamera>),
+               uint32_t(type_id<CompCamera>),
                uint32_t(type_id<CompKeyState>)
         });
 
     EntityId envioronment = cm->add_entity({
            uint32_t(type_id<CompHeightMap>),
+           uint32_t(type_id<CompRenderableMesh>),
         });
 
     cm->add_system(is);

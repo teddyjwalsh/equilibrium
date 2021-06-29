@@ -34,12 +34,13 @@ public:
         graphics_comp.get_window_size(glfw_x_res, glfw_y_res);
 
         auto& ray_camera = get_array<CompCamera>()[0];
-        ray_camera.camera.set_position(glm::vec3(100, 100, 200));
-        ray_camera.camera.set_look_target(glm::normalize(glm::vec3(100, 200, 0)));
+        ray_camera.camera.set_position(glm::vec3(-50, -50, 150));
+        ray_camera.camera.set_look_target((glm::vec3(1000, 1000, 0)));
     }
 
     void update(double dt)
     {
+        
         // frame initialization
         _context.start_frame();
 

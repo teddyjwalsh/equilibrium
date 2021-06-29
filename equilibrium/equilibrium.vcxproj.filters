@@ -39,6 +39,9 @@
     <ClCompile Include="..\gl_graphics_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\terrain_system.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FastNoiseLite.h">
@@ -75,6 +78,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\gl_graphics_system.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\terrain_system.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
