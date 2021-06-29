@@ -11,5 +11,6 @@ public:
     bgfx::Camera camera;
 
     CompCamera() : camera(1000, 800) {}
+
 };
 

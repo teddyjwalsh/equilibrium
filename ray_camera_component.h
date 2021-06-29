@@ -3,6 +3,7 @@
 #include "glm/glm.hpp"
 
 #include "component.h"
+#include "camera.h"
 
 class CompRayCamera : public Component
 {

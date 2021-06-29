@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClCompile Include="..\camera_component.cpp" />
     <ClCompile Include="..\eq_input_system.cpp" />
+    <ClCompile Include="..\gl_graphics_system.cpp" />
     <ClCompile Include="..\graphics_system.cpp" />
     <ClCompile Include="..\height_map_component.cpp" />
     <ClCompile Include="..\main.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\camera_component.h" />
     <ClInclude Include="..\eq_input_system.h" />
     <ClInclude Include="..\FastNoiseLite.h" />
+    <ClInclude Include="..\gl_graphics_system.h" />
     <ClInclude Include="..\graphics_system.h" />
     <ClInclude Include="..\height_map_component.h" />
     <ClInclude Include="..\map.h" />
