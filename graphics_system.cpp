@@ -254,9 +254,9 @@ vec3 gen_ray(float x, float y)
 void main()
 {
     uint node_queue[queue_length];
-    vec3 light_dir = normalize(vec3(cos(time*0.09), 0, sin(time*0.09)));
+    vec3 light_dir = normalize(-vec3(cos(time*0.09), 0,  sin(time*0.09)));
 	const ivec2 dims = imageSize(tex_out);
-	const ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	const ivec2 pixel_coords = ivec2(dims.x - gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);
 
 	vec3 ray = gen_ray(pixel_coords.x*1.0/dims.x, pixel_coords.y*1.0/dims.y);
     float t; 
@@ -282,8 +282,8 @@ void main()
     {
         init_ray.travel = 0;//length(hit_loc - init_ray.loc);
         float init_dist = length(hit_loc - init_ray.loc);
-        num_bounces = 3;//int(clamp(80.0/init_dist, 2.0,3.0));
-        int num_avgs = 3;
+        num_bounces = 2;//int(clamp(80.0/init_dist, 2.0,3.0));
+        int num_avgs = 2;
         //num_avgs = 2;//int(clamp(50.0/init_dist, 1.0,5.0));
         for (int j = 1; j < num_avgs; ++j)
         {
@@ -306,6 +306,7 @@ void main()
 				//if (dot(rand_vec, norm) < 0) { rand_vec = -rand_vec; }
 				
                 //new_ray.dir = normalize(new_ray.dir + 2.0*rand_vec);
+                new_ray.color *= (color_map_lookup(hit_loc.xy));
 				float dotted = 1*max(0,dot(hit_2_light, norm));
 				if (num_bounces > 0)
 				{
@@ -314,7 +315,7 @@ void main()
                 
 				result = ray_into_height_map(new_ray.loc, hit_2_light, t, node_queue, norm, hit_loc);
                 //result = ray_into_height_map_quadtree(new_ray.loc, hit_2_light, 0, t, node_queue, norm, hit_loc);
-                new_ray.color *= (color_map_lookup(hit_loc.xy));
+                
 				float travel_factor = 1/pow(new_ray.travel + 1,2);
 				if (!result)
 				{
@@ -329,15 +330,15 @@ void main()
 					light_sum += vec4(new_ray.color,1.0)*vec4(0.1,0.1,0.2,1.0)*travel_factor;
 					break;
 				}
-				
+				//new_ray.color *= travel_factor;
 				count_bounces += 1;
             }
         }
-        imageStore(tex_out, pixel_coords, (2.0*light_sum/num_avgs));
+        imageStore(tex_out, ivec2(dims.x - pixel_coords.x, pixel_coords.y), (1.0*light_sum/num_avgs));
     }
     else
     {
-        imageStore(tex_out, pixel_coords, vec4(clamp(1 - 1.7*pow(pixel_coords.y,2)/500000.0,0.7,0.95)
+        imageStore(tex_out, ivec2(dims.x - pixel_coords.x, pixel_coords.y), vec4(clamp(1 - 1.7*pow(pixel_coords.y,2)/500000.0,0.7,0.95)
                                     ,clamp(1 - pow(pixel_coords.y,2)/500000.0,0.8,0.98),
                                     1.0,1));
     }

@@ -25,6 +25,8 @@ class GraphicsSystem :
     bgfx::Camera _camera;
     std::shared_ptr<bgfx::Material> _mat;
     bgfx::ComputeShader _cs;
+    std::shared_ptr<bgfx::Buffer<float>> _height_map_buffer;
+    std::shared_ptr<bgfx::Buffer<glm::vec4>> _height_map_color_buffer;
     CombinedNoise _noise;
     int _height_map_x;
     int _height_map_y;
@@ -58,17 +60,17 @@ public:
 
         //_camera.set_position(glm::vec3(0.5, 0.5, 2));
         //_camera.set_look_target(glm::vec3(0.5, 0.5, 0));
-        _camera.set_position(glm::vec3(0.5,0.75,0.5));
-        _camera.set_look_target(glm::vec3(0.5,0,0.5));
+
 
         auto& graphics_comp = get_array<CompGraphics>()[0];
         auto& height_map = get_array<CompHeightMap>()[0];
         height_map.quadtree = quadtree::QuadTree(_height_map_x);
         graphics_comp.window = _context.get_window();
+        int glfw_x_res, glfw_y_res;
+        graphics_comp.get_window_size(glfw_x_res, glfw_y_res);
         int x_res, y_res;
-        graphics_comp.get_window_size(x_res, y_res);
         x_res = 500;
-        y_res = 300;
+        y_res = 500*glfw_y_res/ glfw_x_res;
         graphics_comp.window = _context.get_window();
 
         auto quad_mesh = std::make_shared<bgfx::Mesh>();
@@ -96,15 +98,22 @@ public:
         quad_mat->compile();
 
         //quad_mesh->set_vertices({ {1,0,0,0,1,0,0,0,1,1,1,0} });
-        quad_mesh->set_vertices({ {1,0,0, 0,0,1, 0,0,0, 0,0,1, 1,0,1, 1,0,0} });
+        float quad_height = glfw_y_res*1.0 / glfw_x_res;
+        quad_mesh->set_vertices({ {1,0,0, 0,0,quad_height, 0,0,0, 0,0,quad_height, 1,0,quad_height, 1,0,0} });
         quad_mesh->set_uv_coords({ {1,0, 0,1, 0,0, 0,1, 1,1, 1,0} });
+        _camera = bgfx::Camera(glfw_x_res, glfw_y_res);
+        float f = quad_height / tan(glm::radians(_camera._fov)/2.0) / 2.0;
+        
+        _camera.set_position(glm::vec3(0.5, f, quad_height/2.0));
+        _camera.set_look_target(glm::vec3(0.5, 0, quad_height/2.0));
 
         _quad.set_mesh(quad_mesh);
         _quad.set_material(quad_mat);
         _mat = quad_mat;
         
-        auto height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
-        auto height_map_color_buffer = std::make_shared<bgfx::Buffer<glm::vec4>>();
+
+        height_map.x_size = qt_x_size;
+        height_map.y_size = qt_y_size;
 
         height_map.height_array.resize(qt_x_size * qt_y_size);
         height_map.color_array.resize(qt_x_size * qt_y_size);
@@ -123,14 +132,16 @@ public:
                 max_height = std::max(max_height, height);
             }
         }
-        height_map_buffer->set_data(height_map.height_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
-        height_map_color_buffer->set_data(height_map.color_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+        _height_map_buffer = std::make_shared<bgfx::Buffer<float>>();
+        _height_map_color_buffer = std::make_shared<bgfx::Buffer<glm::vec4>>();
+        _height_map_buffer->set_data(height_map.height_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+        _height_map_color_buffer->set_data(height_map.color_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
         height_map.quadtree.load_nodes();
 
         _cs.add_texture(quad_tex, 1);
         _cs.add_buffer_input(height_map.quadtree.get_buffer(), 2);
-        _cs.add_buffer_input(height_map_buffer, 3);
-        _cs.add_buffer_input(height_map_color_buffer, 5);
+        _cs.add_buffer_input(_height_map_buffer, 3);
+        _cs.add_buffer_input(_height_map_color_buffer, 5);
         _cs.set_code(light_compute_shader);
         _cs.set_call_size(x_res, y_res, 1);
         _cs.compile();
@@ -181,6 +192,31 @@ public:
             _cs._program.set_uniform_1f(_cs._program.get_uniform_location("time"), time_comp.current_time);
 
             _cs.run();
+        }
+
+        if (height_map.height_changed)
+        {
+            
+            _height_map_buffer->set_data(height_map.height_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+            height_map.height_changed = false;
+        }
+        if (height_map.color_changed)
+        {
+            /*
+            for (int i = 0; i < height_map.color_array.size(); ++i)
+            {
+                if (i % 3 == 0)
+                {
+                    height_map.color_array[i] = glm::vec4(0, 1, 0, 1);
+                }
+                else
+                {
+                    height_map.color_array[i] = glm::vec4(1, 1, 1, 1);
+                }
+            }
+            */
+            _height_map_color_buffer->set_data(height_map.color_array, bgfx::BindPoint::SHADER_STORAGE_BUFFER);
+            height_map.color_changed = false;
         }
 
         // draw quad

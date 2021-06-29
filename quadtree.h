@@ -126,7 +126,7 @@ public:
 		return _buffer;
 	}
 
-	std::tuple<bool, glm::vec3> ray_into_height_map_quadtree(const glm::vec3& origin, const glm::vec3& direction, int root)
+	std::tuple<bool, glm::vec3> ray_into_height_map_quadtree(const glm::vec3& origin, const glm::vec3& direction, int root=0)
 	{
 		auto cur_box = std::make_pair(_nodes[root].location, _nodes[root].location + glm::vec3(_nodes[root].size, _nodes[root].size, _nodes[root].max_height));
 		auto [hit, tmin, tmax] = ray_intersect_aabb(origin, direction, cur_box.first, cur_box.second);
