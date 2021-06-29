@@ -16,6 +16,7 @@ class SysInputEq : public SysInput
 		auto& key_state = get_array<CompKeyState>()[0];
 		auto& height_map = get_array<CompHeightMap>()[0];
 		auto cam = key_state.sibling<CompCamera>();
+		auto action_comp = key_state.sibling<CompActions>();
 		auto& graphics = get_array<CompGraphics>()[0];
 		int glfw_x_res, glfw_y_res;
 		graphics.get_window_size(glfw_x_res, glfw_y_res);
@@ -36,16 +37,19 @@ class SysInputEq : public SysInput
 		}
 		if (key_state.push[1])
 		{
-			/*
+			
 			printf("PUSSHHH\n");
 			auto dir = cam->get_ray((key_state.mouse_pos_x * 1.0 / glfw_x_res), (1.0 - key_state.mouse_pos_y * 1.0 / glfw_y_res));
 			auto [hit, intersect] = height_map.quadtree.ray_into_height_map_quadtree(cam->location, dir);
 			printf("Dir: %f, %f, %f\n", dir.x, dir.y, dir.z);
 			printf("Intersect: %f, %f, %f\n", intersect.x, intersect.y, intersect.z);
 			printf("Mouse pos: %f, %f\n", cam->location.x, cam->location.y);
- 			height_map.color_array[height_map.height_map_index(intersect.x, intersect.y)] = glm::vec4(1,0,0,1);
-			height_map.color_changed = true;
-			*/
+			
+			Action new_move_action;
+			new_move_action.action_type = Action::ActionType::MOVE;
+			new_move_action.location = glm::vec2(intersect.x, intersect.y);
+			action_comp.push(new_move_action);
+			
 		}
 		if (key_state.pressed[GLFW_KEY_W])
 		{
