@@ -3,6 +3,7 @@
 #include "system.h"
 #include "height_map_component.h"
 #include "renderable_mesh_component.h"
+#include "light_map_component.h"
 #include "noise_gen.h"
 
 class SysTerrain : public System
@@ -15,6 +16,7 @@ virtual void init_update() override
 	int block_size = 1.0;
 	auto& graphics_comp = get_array<CompGraphics>()[0];
 	auto& height_map = get_array<CompHeightMap>()[0];
+	auto light_map = height_map.sibling<CompLightMap>();
 	height_map.quadtree = quadtree::QuadTree(qt_x_size);
 
 	height_map.x_size = qt_x_size;
@@ -22,6 +24,7 @@ virtual void init_update() override
 
 	height_map.height_array.resize(qt_x_size * qt_y_size);
 	height_map.color_array.resize(qt_x_size * qt_y_size);
+	light_map->map.resize(qt_x_size * qt_y_size, 0.5);
 
 	double max_height;
 	for (int i = 0; i < qt_x_size; i += 1)

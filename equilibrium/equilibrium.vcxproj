@@ -138,6 +138,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\tjwal\projects\bare_gfx;C:\Users\tjwal\projects\ECS;.\</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,17 +156,21 @@
     <ClCompile Include="..\graphics_system.cpp" />
     <ClCompile Include="..\height_map_component.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\quadtree.cpp" />
     <ClCompile Include="..\ray_camera_component.cpp" />
     <ClCompile Include="..\renderable_mesh_component.cpp" />
     <ClCompile Include="..\terrain_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\camera_component.h" />
+    <ClInclude Include="..\directional_light_component.h" />
     <ClInclude Include="..\eq_input_system.h" />
     <ClInclude Include="..\FastNoiseLite.h" />
     <ClInclude Include="..\gl_graphics_system.h" />
     <ClInclude Include="..\graphics_system.h" />
     <ClInclude Include="..\height_map_component.h" />
+    <ClInclude Include="..\light_map_component.h" />
+    <ClInclude Include="..\light_system.h" />
     <ClInclude Include="..\map.h" />
     <ClInclude Include="..\noise.h" />
     <ClInclude Include="..\noise_gen.h" />

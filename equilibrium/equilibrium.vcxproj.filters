@@ -42,6 +42,9 @@
     <ClCompile Include="..\terrain_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\quadtree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FastNoiseLite.h">
@@ -81,6 +84,15 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\terrain_system.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\light_system.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\directional_light_component.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\light_map_component.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

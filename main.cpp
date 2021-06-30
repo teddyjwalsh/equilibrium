@@ -25,6 +25,7 @@
 #include "terrain_system.h"
 #include "gl_graphics_system.h"
 #include "time_component.h"
+#include "light_system.h"
 #include "height_map_component.h"
 
 
@@ -37,16 +38,21 @@ int main()
     cm->add_array<CompPosition>();
     cm->add_array<CompPickupper>();
     cm->add_array<CompKeyState>();
+    cm->add_array<CompLightMap>();
     cm->add_array<CompTime>();
+    cm->add_array<CompDirectionalLight>();
     cm->add_array<CompHeightMap>();
     auto time_system = std::make_shared<SysTime>();
     auto terrain_system = std::make_shared<SysTerrain>();
     auto graphics_system = std::make_shared<SysGLGraphics>();
+    auto light_system = std::make_shared<SysLight>();
     cm->add_system(graphics_system);
     cm->add_system(time_system);
     cm->add_system(terrain_system);
+    cm->add_system(light_system);
     cm->add_component<CompGraphics>();
     cm->add_component<CompTime>();
+    cm->add_component<CompDirectionalLight>();
 
     auto is = std::make_shared<SysInputEq>();
     EntityId player = cm->add_entity({
@@ -59,6 +65,8 @@ int main()
     EntityId envioronment = cm->add_entity({
            uint32_t(type_id<CompHeightMap>),
            uint32_t(type_id<CompRenderableMesh>),
+           uint32_t(type_id<CompLightMap>),
+
         });
 
     cm->add_system(is);
