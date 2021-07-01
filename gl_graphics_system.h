@@ -50,6 +50,8 @@ public:
 
         for (auto& rm : renderable_array)
         {
+            auto pos_comp = rm.sibling<CompPosition>();
+            rm.mesh.set_position(pos_comp->pos);
             ray_camera.camera.draw_object(rm.mesh);
         }
         _context.end_frame();

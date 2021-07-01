@@ -58,9 +58,16 @@ int main()
     EntityId player = cm->add_entity({
                uint32_t(type_id<CompPosition>),
                uint32_t(type_id<CompPickupper>),
+               uint32_t(type_id<CompRenderableMesh>),
                uint32_t(type_id<CompCamera>),
                uint32_t(type_id<CompKeyState>)
         });
+
+    auto player_pos = cm->entity_component<CompPosition>(player);
+    auto player_mesh = cm->entity_component<CompRenderableMesh>(player);
+    player_mesh->mesh.get_mesh()->load_obj("sphere.obj");
+
+    player_pos->pos = glm::vec3(100, 100, 0);
 
     EntityId envioronment = cm->add_entity({
            uint32_t(type_id<CompHeightMap>),

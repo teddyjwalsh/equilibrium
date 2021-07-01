@@ -95,5 +95,8 @@
     <ClInclude Include="..\light_map_component.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\movement_component.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

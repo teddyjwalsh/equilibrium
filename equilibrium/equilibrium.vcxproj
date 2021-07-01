@@ -172,6 +172,7 @@
     <ClInclude Include="..\light_map_component.h" />
     <ClInclude Include="..\light_system.h" />
     <ClInclude Include="..\map.h" />
+    <ClInclude Include="..\movement_component.h" />
     <ClInclude Include="..\noise.h" />
     <ClInclude Include="..\noise_gen.h" />
     <ClInclude Include="..\quadtree.h" />

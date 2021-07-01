@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdlib>
+
 #include "system.h"
 #include "light_map_component.h"
 #include "height_map_component.h"
@@ -24,17 +26,22 @@ public:
     auto height_map_r_mesh = height_map_comp.sibling<CompRenderableMesh>();
     auto& directional_light = get_array<CompDirectionalLight>()[0];
     auto& time = get_array<CompTime>()[0];
-    directional_light.direction = glm::vec3(0, -cos(time.current_time*0.1), -sin(time.current_time*0.1));
+    directional_light.direction = glm::vec3(0, -cos(time.current_time*0.1)+0.1, -sin(time.current_time*0.1));
     static std::vector<float> vertex_colors((height_map_comp.y_size-1)*(height_map_comp.x_size-1)*6*4);
 
-    for (int i = 0; i < height_map_comp.x_size; i+=2)
+    int per_frame_division = 6;
+
+    for (int i = 0; i < height_map_comp.x_size; i+=per_frame_division)
     {
-        for (int j = 0; j < height_map_comp.y_size; j+=2)
+        for (int j = 0; j < height_map_comp.y_size; j+=per_frame_division)
         {
+            int div_index1 = rand() % per_frame_division;
+            int div_index2 = rand() % per_frame_division;
             for (auto& d_light : directional_lights)
             {
+
                 // Shoot a ray from just above the x/y center of each height map entry to each light
-                glm::vec3 ray_start(i + 0.5, j + 0.5, height_map_comp.height_array[height_map_comp.height_map_index(i, j)] + 0.01);
+                glm::vec3 ray_start(i + div_index1 + 0.5, j + div_index2 + 0.5, height_map_comp.height_array[height_map_comp.height_map_index(i+div_index1, j+div_index2)] + 0.01);
                 //bool hit = true;
                 auto [hit, intersect] = height_map_comp.quadtree.ray_into_height_map_quadtree(ray_start, -d_light.direction);
 
@@ -42,40 +49,19 @@ public:
                 glm::vec3 norm;
                 if (!hit)
                 {
-                    norm = height_map_comp.get_normal(i, j);
+                    norm = height_map_comp.get_normal(i + div_index1, j + div_index2);
                     new_val = d_light.intensity * glm::dot(norm, -d_light.direction);
                 }
                 new_val = glm::max(0.0f, new_val);
-                light_map->set_value(i, j, new_val);
-                if (i < height_map_comp.x_size - 2 && j < height_map_comp.y_size - 2)
+                light_map->set_value(i + div_index1, j + div_index2, new_val);
+                if (i < height_map_comp.x_size - per_frame_division && j < height_map_comp.y_size - per_frame_division)
                 {
                     for (int k = 0; k < 24; k += 4)
                     {
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + k] = new_val;
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + 1 + k] = new_val;
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + 2 + k] = new_val;
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + 4 + k] = new_val;
-                    }
-                    for (int k = 0; k < 24; k += 4)
-                    {
-                        vertex_colors[(j+1) * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + k] = new_val;
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + 1 + k] = new_val;
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + 2 + k] = new_val;
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + i * 6 * 4 + 4 + k] = new_val;
-                    }
-                    for (int k = 0; k < 24; k += 4)
-                    {
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + (i+1) * 6 * 4 + k] = new_val;
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + 1 + k] = new_val;
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + 2 + k] = new_val;
-                        vertex_colors[j * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + 4 + k] = new_val;
-                    }
-                    for (int k = 0; k < 24; k += 4)
-                    {
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + k] = new_val;
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + 1 + k] = new_val;
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + 2 + k] = new_val;
-                        vertex_colors[(j + 1) * (height_map_comp.x_size - 1) * 6 * 4 + (i + 1) * 6 * 4 + 4 + k] = new_val;
+                        vertex_colors[(j+div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i+div_index1) * 6 * 4 + k] = new_val/2.0 + vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + k]/2.0;
+                        vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + 1 + k] = new_val/2.0 + vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + 1 + k]/2.0;
+                        vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + 2 + k] = new_val/2.0 + vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + 2 + k]/2.0;
+                        vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + 4 + k] = new_val/2.0 + vertex_colors[(j + div_index2) * (height_map_comp.x_size - 1) * 6 * 4 + (i + div_index1) * 6 * 4 + 4 + k]/2.0;
                     }
                 }
 
